@@ -29,7 +29,7 @@ class Drone:
         self.close_counter = 0
         self.dt = 0.05
         self.dist = Drone.get_dist(self)
-        self.max_thrust = 60
+        self.max_thrust = 100
         self.radius = .215/2
         self.I = 0.266
         self.mass = 1
@@ -41,6 +41,9 @@ class Drone:
         return ((self.targets[self.iTarget][0] - self.position[0])**2 + (self.targets[self.iTarget][1] - self.position[1])**2)**0.5
     
     def update_state(self): #Physics update
+        target = self.targets[self.iTarget]
+        targetX = target[0]
+        targetY = target[1]
 
         # add noise
         #for i in range(len(net_inputs[0])):
@@ -49,9 +52,17 @@ class Drone:
         L_thrust = self.mass / 2 * (-self.g)
         R_thrust = self.mass / 2 * (-self.g)
 
-        #R_thrust += - self.position[2] - self.velocity[2] + 0.1*(self.velocity[0] - self.velocity[1])
-        #L_thrust += + self.position[2] + self.velocity[2] - 0.1*(self.velocity[0] - self.velocity[1])
+        y_correction = targetY-self.position[1] - self.velocity[1]
+        x_correction = targetX-self.position[0]
+        angle_correction = 100*self.position[2]
+        angVel_correction = 100*self.velocity[2]
+        xVel_correction = 2*self.velocity[0]
 
+        R_thrust += y_correction - x_correction + xVel_correction - angle_correction - angVel_correction
+        L_thrust += y_correction + x_correction - xVel_correction + angle_correction + angVel_correction
+
+        R_thrust = min(max(0,R_thrust), self.max_thrust)
+        L_thrust = min(max(0,L_thrust), self.max_thrust)
         self.thrust[0].append(L_thrust)
         self.thrust[1].append(R_thrust)
 
@@ -174,7 +185,9 @@ def run_test(game, drones, max_score):
 
                 if abs(drones[i].position[2]) > game.break_angle*pi/180:
                     drones[i].kill()
-                elif drones[i].get_dist() > game.max_dist:
+                elif abs(drones[i].position[0]) > game.w/2:
+                    drones[i].kill()
+                elif abs(drones[i].position[1]) > game.h/2:
                     drones[i].kill()
 
                 if dist[i][-1] < 8:
@@ -184,10 +197,6 @@ def run_test(game, drones, max_score):
                         dist[i] = []
                         counter = 0
                 else:
-                    if v[i][-1] < 1:
-                        penalty[i].append(dist[i][-1])
-                    else:
-                        penalty[i].append(0)
                     drones[i].close_counter = 0
 
         game.update(drones)
