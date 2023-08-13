@@ -36,6 +36,7 @@ class Drone:
         self.g = -100
         self.alive = True
         self.thrust = [[],[]]
+        self.data = []
 
     def get_dist(self):
         return ((self.targets[self.iTarget][0] - self.position[0])**2 + (self.targets[self.iTarget][1] - self.position[1])**2)**0.5
@@ -49,8 +50,8 @@ class Drone:
         #for i in range(len(net_inputs[0])):
         #    net_inputs[0][i] = net_inputs[0][i] + np.random.rand() * net_inputs[0][i] * 0.0001
 
-        L_thrust = self.mass / 2 * (-self.g)
-        R_thrust = self.mass / 2 * (-self.g)
+        L_thrust = self.mass / 2 * (-self.g) + np.random.rand() * 2
+        R_thrust = self.mass / 2 * (-self.g) + np.random.rand() * 2
 
         y_correction = targetY-self.position[1] - self.velocity[1]
         x_correction = targetX-self.position[0]
@@ -81,6 +82,13 @@ class Drone:
         Fy = F * np.cos(self.position[2]) + self.g * self.mass
         self.acceleration[1] = Fy / self.mass
         [self.position[1], self.velocity[1]] = suvat(self.position[1], self.velocity[1], self.acceleration[1], self.dt)
+        
+        # for AI-Project
+        
+        net_inputs = [element for sublist in [self.position,self.velocity] for element in sublist]
+        for i in range(2): net_inputs[i] = self.targets[self.iTarget][i] - net_inputs[i]
+        self.data.append([np.array([net_inputs]), [L_thrust, R_thrust]])
+
     def kill(self):
         self.alive = False
     def set_state(self,state):
@@ -192,7 +200,7 @@ def run_test(game, drones, max_score):
 
                 if dist[i][-1] < 8:
                     drones[i].close_counter += 1
-                    if drones[i].close_counter > 400:
+                    if drones[i].close_counter > 1000:
                         drones[i].iTarget += 1
                         dist[i] = []
                         counter = 0
