@@ -45,22 +45,32 @@ class Drone:
         target = self.targets[self.iTarget]
         targetX = target[0]
         targetY = target[1]
+        [x, y, a] = self.position
+        [vx, vy, va] = self.velocity
+        g = self.g
+        m = self.mass
 
-        # add noise
-        #for i in range(len(net_inputs[0])):
-        #    net_inputs[0][i] = net_inputs[0][i] + np.random.rand() * net_inputs[0][i] * 0.0001
+        #--------------- Define Control Here ---------------#
 
-        L_thrust = self.mass / 2 * (-self.g) + np.random.rand() * 2
-        R_thrust = self.mass / 2 * (-self.g) + np.random.rand() * 2
+        L_thrust = 0
+        R_thrust = 0
 
-        y_correction = targetY-self.position[1] - self.velocity[1]
-        x_correction = targetX-self.position[0]
-        angle_correction = 100*self.position[2]
-        angVel_correction = 100*self.velocity[2]
-        xVel_correction = 2*self.velocity[0]
+        #---------------------------------------------------#
+
+        ''' #Solution
+        L_thrust = m / 2 * (-g)
+        R_thrust = m / 2 * (-g)
+
+        y_correction = targetY-y - vy
+        x_correction = np.sign(targetX-x)*min(abs(targetX-x),100)#targetX-x
+        angle_correction = 100*a
+        angVel_correction = 100*va
+        xVel_correction = 2*vx
 
         R_thrust += y_correction - x_correction + xVel_correction - angle_correction - angVel_correction
         L_thrust += y_correction + x_correction - xVel_correction + angle_correction + angVel_correction
+
+        '''
 
         R_thrust = min(max(0,R_thrust), self.max_thrust)
         L_thrust = min(max(0,L_thrust), self.max_thrust)
